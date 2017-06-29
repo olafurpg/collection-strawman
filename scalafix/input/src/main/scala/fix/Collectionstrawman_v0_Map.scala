@@ -1,3 +1,6 @@
+/* ONLY
+rewrite = "scala:fix.Collectionstrawman_v0"
+ */
 package fix
 
 import scala.collection.immutable.HashMap

@@ -12,6 +12,7 @@ case class Collectionstrawman_v0(mirror: Database)
       mirror.entries.filter(_._1.label == ctx.tree.tokens.head.input.label))
   def rewrite(ctx: RewriteCtx): Patch = {
     val db = forCtx(ctx)
+    logger.elem(db)
     def immutable(name: String,
                   immutable: Boolean = true,
                   pkg: Boolean = true) = {

@@ -11,7 +11,9 @@ case class Collectionstrawman_v0(mirror: Database)
     Database(
       mirror.entries.filter(_._1.label == ctx.tree.tokens.head.input.label))
   def rewrite(ctx: RewriteCtx): Patch = {
-    logger.elem(forCtx(ctx))
+    val db = forCtx(ctx)
+    logger.elem(db)
+    db.sugars.values.foreach(sugar => logger.elem(sugar))
     def immutable(name: String, pkg: Boolean = true) = {
       val rename = Name.Indeterminate(name)
       ctx.replace(
@@ -38,10 +40,16 @@ case class Collectionstrawman_v0(mirror: Database)
       case name @ Term.Name("#::") =>
         logger.elem(name, name.symbol)
     }
-    val names = mirror.entries.head._2.copy(denotations = Nil, sugars = Nil)
+    val intArrayOps =
+      if (db.sugars.values.exists(_ == "scala.Predef.intArrayOps(*)")) {
+        ctx.addGlobalImport(importer"scala.Predef.{intArrayOps => _}") +
+          ctx.addGlobalImport(importer"strawman.collection.arrayToArrayOps")
+      } else Patch.empty
+
     // TODO(olafur) add support to remove import by symbol
     //      ctx.removeImportee(importee"scala.collection.immutable.HashMap") +
-    immutable("List") +
+    intArrayOps +
+      immutable("List") +
       immutable("Nil") +
       immutable("Map") +
       immutable("Seq") +

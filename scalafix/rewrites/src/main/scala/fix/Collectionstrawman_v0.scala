@@ -12,9 +12,9 @@ case class Collectionstrawman_v0(mirror: Database)
       mirror.entries.filter(_._1.label == ctx.tree.tokens.head.input.label))
   def rewrite(ctx: RewriteCtx): Patch = {
     val db = forCtx(ctx)
-    logger.elem(db)
-    db.sugars.values.foreach(sugar => logger.elem(sugar))
-    def immutable(name: String, pkg: Boolean = true) = {
+    def immutable(name: String,
+                  immutable: Boolean = true,
+                  pkg: Boolean = true) = {
       val rename = Name.Indeterminate(name)
       ctx.replace(
         Symbol(s"_root_.scala.collection.immutable.$name."),
@@ -29,26 +29,34 @@ case class Collectionstrawman_v0(mirror: Database)
           ctx.replace(
             Symbol(s"_root_.scala.package.$name."),
             Term.Name(name),
-            additionalImports = List(
-              importer"scala.{$rename => _}",
-              importer"strawman.collection.immutable.$rename"
-            )
+            additionalImports =
+              importer"strawman.collection.immutable.$rename" :: {
+                if (pkg) importer"scala.{$rename => _}" :: Nil
+                else Nil
+              }
           )
       }
-    }
-    ctx.tree.traverse {
-      case name @ Term.Name("#::") =>
-        logger.elem(name, name.symbol)
     }
     val intArrayOps =
       if (db.sugars.values.exists(_ == "scala.Predef.intArrayOps(*)")) {
         ctx.addGlobalImport(importer"scala.Predef.{intArrayOps => _}") +
           ctx.addGlobalImport(importer"strawman.collection.arrayToArrayOps")
       } else Patch.empty
+    val arrayBufferSymbol = Symbol(
+      "_root_.scala.collection.mutable.ArrayBuffer.")
 
-    // TODO(olafur) add support to remove import by symbol
-    //      ctx.removeImportee(importee"scala.collection.immutable.HashMap") +
-    intArrayOps +
+    val arrayBuffer =
+      if (db.names.values.exists(_ == arrayBufferSymbol)) {
+        // TODO(olafur) add support to remove import by symbol.
+        ctx.addGlobalImport(importer"strawman.collection.mutable.ArrayBuffer") ++
+          ctx.tree.collect {
+            case ee: Importee
+                if ee.symbolOpt.exists(_.normalized == arrayBufferSymbol) =>
+              ctx.removeImportee(ee)
+          }
+      } else Patch.empty
+    arrayBuffer +
+      intArrayOps +
       immutable("List") +
       immutable("Nil") +
       immutable("Map") +

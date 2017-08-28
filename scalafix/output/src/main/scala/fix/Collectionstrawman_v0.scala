@@ -1,8 +1,8 @@
 package fix
 
-import scala.{ List => _, Nil => _, Seq => _, Vector => _, :: => _, #:: => _ }
+import scala.{ Iterable => _, List => _, Nil => _, Seq => _, Set => _, Vector => _, :: => _, #:: => _ }
 import scala.Predef.{ Map => _, augmentString => _, intArrayOps => _, ArrowAssoc, charWrapper}
-import strawman.collection.{ stringToStringOps, arrayToArrayOps }
+import strawman.collection.{ Iterable, Set, stringToStringOps, arrayToArrayOps }
 import strawman.collection.immutable.{ LazyList, List, Map, Nil, Range, Seq, :: }
 import strawman.collection.immutable.LazyList.#::
 
@@ -50,4 +50,17 @@ object Collectionstrawman_v0_ArrayAndString {
 
 object Collectionstrawman_v0_Range {
   for (i <- Range.inclusive(1, 10); j <- Range(0, 10)) yield (i, j)
+}
+
+object Collectionstrawman_v0_Traversable {
+  def foo(xs: Iterable[(Int, String)], ys: List[Int]): Unit = {
+    xs.to(List)
+    xs.to(Set)
+    ys.toSeq
+    xs.to(List)
+    xs.to(strawman.collection.immutable.Set)
+    xs.to(strawman.collection.Map)
+    xs.iterator()
+    ys.iterator()
+  }
 }
